@@ -12,7 +12,15 @@ def _syncify_wrap(t, method_name):
     @functools.wraps(method)
     def syncified(*args, **kwargs):
         coro = method(*args, **kwargs)
-        loop = asyncio.get_event_loop()
+        # loop = asyncio.get_event_loop()        
+        # 2023.04.24 modified        
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError as e:
+            if str(e).startswith('There is no current event loop in thread'):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)      
+        
         if loop.is_running():
             return coro
         else:
